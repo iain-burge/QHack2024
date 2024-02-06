@@ -1,7 +1,10 @@
 
 import numpy as np
 
-def mult(x: int, aux: int, n: int, m: int, debug: int = False):
+def mult(
+        x: int, aux: int, n: int, m: int, modulo: bool = True, 
+        debug: bool = False,
+    ):
     """
         x   (int): input value
         aux (int): auxiliary register
@@ -23,7 +26,10 @@ def mult(x: int, aux: int, n: int, m: int, debug: int = False):
             print(f"{aux} {'-' if i%2==1 else '+'} {x>>(m*i)}")
         aux -= ((-1)**(i)) * (x>>(m*i))
         
-    return x%(1<<n), aux%(1<<n)
+    if modulo:
+        x, aux = x%(1<<n), aux%(1<<n)
+
+    return x, aux
 
 
 def testMult(n_bits: int = 8, n_tests: int = 16):
