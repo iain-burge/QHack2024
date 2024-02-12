@@ -75,7 +75,7 @@ def qasinCORDIC(t, n_bits):
 
 
 def main():
-    n_bits  = 10
+    n_bits  = 5
 
     # t       = -181
     # expected = np.arcsin(t/(2**n_bits))
