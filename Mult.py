@@ -2,6 +2,9 @@
 import numpy as np
 from functools import cache
 
+from ModuloBitShift import bitshift
+from ShiftAdd import add
+
 @cache
 def fib(i:int) -> int: 
     return int(np.round(
@@ -39,38 +42,81 @@ def mult(
 
     return x, aux
 
-
-def multImproved(
-        x: int, aux_1: int, aux_2: int, n: int, m: int, 
-        modulo: bool = False, debug: bool = False,
+def _multImprovedNonModulo(
+        x: int, aux_1: int, aux_2: int, n: int, m: int, debug: bool = False
     ) -> tuple[int, int, int]:
+   
+    aux_2 += x
+    x += aux_2>>m
+    aux_1 += x
 
     if debug:
         print(f"Init: \n\t{(x,aux_1,aux_2)=}")
-   
-    aux_2 += x
-    x     += aux_2>>m
-    aux_1 += x
     
     for i in range(int(1+2*np.ceil(np.log(n/m)/np.log((1+5**.5))))):
         if debug:
             print(f"{i=} | {x=} | {aux_1=}")
         if i%2 == 0:
-            x       += ((-1)**(fib(i))) * (aux_1>>(m*fib(i)))
+            x     += ((-1)**fib(i)) * (aux_1>>(m*fib(i)))
         else:
-            aux_1   += ((-1)**(fib(i))) * (x>>(m*fib(i)))
+            aux_1 += ((-1)**fib(i)) * (x>>(m*fib(i)))
 
+    if debug:
+        print(f"aux_2 -= aux_1 | {aux_2} -= {aux_1} ({aux_2-aux_1})")
     aux_2 -= aux_1
     
     for i in range(int(1+2*np.ceil(np.log(n/m)/np.log((1+5**.5))))-1, -1, -1):
         if debug:
             print(f"{i=} | {x=} | {aux_1=}")
         if i%2 == 0:
-            x       -= ((-1)**(fib(i))) * (aux_1>>(m*fib(i)))
+            x     -= ((-1)**fib(i)) * (aux_1>>(m*fib(i)))
         else:
-            aux_1   -= ((-1)**(fib(i))) * (x>>(m*fib(i)))
+            aux_1 -= ((-1)**fib(i)) * (x>>(m*fib(i)))
 
     aux_1 -= x
+
+    if debug:
+        print(f"Result: \n\t{(x,aux_1,aux_2)=}")
+
+    return x, aux_1, aux_2
+
+
+def multImproved(
+        x: int, aux_1: int, aux_2: int, n: int, m: int, 
+        modulo: bool = False, debug: bool = False,
+    ) -> tuple[int, int, int]:
+
+    if not modulo:
+        return _multImprovedNonModulo(x, aux_1, aux_2, n, m, debug)
+
+    if debug:
+        print(f"Init: \n\t{(x,aux_1,aux_2)=}")
+   
+    aux_2, x = add(aux_2, x, 0, n=n)
+    x += bitshift(aux_2, m, n)
+    aux_1, x = add(aux_1, x, 0, n=n)
+    
+    for i in range(int(1+2*np.ceil(np.log(n/m)/np.log((1+5**.5))))):
+        if debug:
+            print(f"{i=} | {x=} | {aux_1=}")
+        if i%2 == 0:
+            x, aux_1 = add(x, aux_1, m*fib(i), n, negativeY=(fib(i)%2==1))
+        else:
+            aux_1, x = add(aux_1, x, m*fib(i), n, negativeY=(fib(i)%2==1))
+
+    if debug:
+        print(f"aux_2 -= aux_1 | {aux_2} -= {aux_1} ({aux_2-aux_1})")
+    aux_2, aux_1 = add(aux_2, aux_1, 0, n=n, negativeY=True)
+    
+    for i in range(int(1+2*np.ceil(np.log(n/m)/np.log((1+5**.5))))-1, -1, -1):
+        if debug:
+            print(f"{i=} | {x=} | {aux_1=}")
+        if i%2 == 0:
+            x, aux_1 = add(x, aux_1, m*fib(i), n, negativeY=not (fib(i)%2==1))
+        else:
+            aux_1, x = add(aux_1, x, m*fib(i), n, negativeY=not (fib(i)%2==1))
+
+    aux_1, x = add(aux_1, x, 0, n, negativeY=True)
 
     if modulo:
         x, aux_2 = x%(1<<n), aux_2%(1<<n)
@@ -141,7 +187,10 @@ def testMultImproved(n_bits: int = 8, n_tests: int = 16):
 def main():
     n_bits:     int = 8
     n_tests:    int = 32
-    testMultImproved(n_bits, n_tests)
+    # testMultImproved(n_bits, n_tests)
+    out = multImproved(-100, 0, 0, n_bits, 2, modulo=False, debug=True)[0]
+    print(f"out = {out if out<(1<<(n_bits-1)) else out-(1<<n_bits)}")
+    print(f"{mult(181, 4, n_bits, 2)=}")
 
     # x: int = 55
     #
