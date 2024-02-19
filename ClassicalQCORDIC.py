@@ -29,12 +29,13 @@ def asinCORDICCheating(t:int, n_bits:int, debug:bool=False):
         tempT.append(t_i); tempTheta.append((2**n_bits)*theta_i)
         
 
-        # d.append(np.sign(x_i) if y_i <= t_i else -np.sign(x_i))
-        if x_i>=0:
-            d.append(1 if y_i <= t_i else -1)
-        else:
-            d.append(1 if t_i<=0 else -1)
-        # d.append(1 if theta_i <= supertempTheta else -1)
+        # if x_i>=0:
+        #     d.append(1 if y_i <= t_i else -1)
+        # else:
+        #     d.append(1 if t_i<=0 else -1)
+        d.append(
+            np.sign(x_i)*np.sign(t_i - (y_i if x_i>0 else 0))
+        )
 
         if debug:
             print(f"|x{i-1}={x_i:.2f}\t|y{i-1}={y_i:.2f}"
@@ -70,6 +71,7 @@ def asinCORDICCheating(t:int, n_bits:int, debug:bool=False):
 
 
 def asinCORDICClassical(t, n_bits):
+    #Note: this one has a bug from the paper
     theta_i:    int = 0
     x_i:        int = (1<<n_bits)-1
     y_i:        int = 0
@@ -105,6 +107,7 @@ def qasinCORDIC(t, n_bits):
     t (int) [0,1]: input angle written in fixed point notation
     n_bits (int): number of bits used to describe t
     """
+    #Note: this one has a bug from the paper
     theta_i:    int = 0
     x_i:        int = (1<<n_bits)-1
     y_i:        int = 0
@@ -144,7 +147,7 @@ def qasinCORDIC(t, n_bits):
     return theta_i
 
 
-def qasinModuloCORDIC(t, n_bits):
+def qasinModuloCORDIC(t: int, n_bits: int, debug: bool = False):
     """
     Unitary version of double rotation CORDIC algorithm (TODO: cite the paper)
     t (int) [0,1]: input angle written in fixed point notation
@@ -159,10 +162,37 @@ def qasinModuloCORDIC(t, n_bits):
     aux_2:      int = 0
     d:   list[bool] = [False] #Note, first index not used
 
-    # tempX = []; tempY = []
+    supertempTheta = np.arcsin(t/(1<<n_bits))
+    tempX = []; tempY = []; tempT = []; tempTheta = []
+
     for i in range(1, n):
+        tempX.append(x_i); tempY.append(y_i); 
+        tempT.append(t_i); tempTheta.append((2**n_bits)*theta_i)
         # tempX.append(x_i); tempY.append(y_i)
-        d.append(not(isneg(x_i, n, modulo=True) != (y_i < t_i)))
+        # d.append(not(isneg(x_i, n, modulo=True) != (y_i < t_i)))
+
+        # d.append(theta_i >= supertempTheta)
+
+        d.append(
+            isneg(x_i, n, True) 
+            != (isneg(t_i - (0 if isneg(x_i, n, True) else y_i), n, True))
+        )
+
+        # d.append(
+        #     isneg(x_i, n, modulo=True)
+        #     # != isneg(t_i - (y_i if x_i>0 else 0), n, modulo=True)
+        #     !=  isneg(
+        #             add(t_i, (y_i if x_i>0 else 0), 0, n, True)[0], 
+        #             n, modulo=True
+        #         )
+        # )
+
+        if debug:
+            print(f"|x{i-1}={x_i:.2f}\t|y{i-1}={y_i:.2f}"
+                  +f"\t|t{i-1}={t_i:.2f}\t|theta{i-1}={theta_i:.2f}"
+                  +f"\t|d{i}={d[i]}"
+                  +f"\t|truD{i}={int(1 if theta_i <= supertempTheta else -1)}"
+            )
 
         if d[i]:
             x_i, y_i = y_i, x_i
@@ -194,15 +224,15 @@ def main():
     t       = 4079
 
     expected  = np.arcsin(t/(2**n_bits))
-    predicted = asinCORDICCheating(t, n_bits, True)
+    predicted = qasinModuloCORDIC(t, n_bits, True)
     print(f"{t, n_bits=}\t({t/(2**n_bits)})")
     print("\tExpected:   ", expected)
     print("\tPredicted:  ", predicted)
     print("\tDifference: ", predicted-expected)
 
-    test = np.linspace(-(1<<n_bits), (1<<n_bits), num=2048, dtype=np.int32)
+    test = np.linspace(-(1<<n_bits), (1<<n_bits), num=256, dtype=np.int32)
     expected = np.arcsin(test/(2**n_bits))
-    predicted = np.array([asinCORDICCheating(t, n_bits) for t in test])
+    predicted = np.array([qasinModuloCORDIC(t, n_bits) for t in test])
 
     plt.scatter(test, expected, label="Expected", marker='hd')
     plt.scatter(test, predicted, label="Predicted", marker="hd")
