@@ -155,6 +155,8 @@ def qasinModuloCORDIC(t: int, n_bits: int) -> float:
     d:   list[bool] = []
 
     for i in range(1, n):
+        #Note: The original paper's equation for d introduced some
+        #      errors. This new equation seems to have fixed the issue
         d.append(
             isneg(x_i, n) != (isneg(t_i - (0 if isneg(x_i, n) else y_i), n))
         )
@@ -179,13 +181,12 @@ def qasinModuloCORDIC(t: int, n_bits: int) -> float:
 
 
 def main():
-    n_bits  = 12
-
-    test = np.linspace(-(1<<n_bits), (1<<n_bits), num=256, dtype=np.int32)
-    expected = np.arcsin(test/(2**n_bits))
+    n_bits    = 10
+    test      = np.linspace(-(1<<n_bits), (1<<n_bits), num=2048, dtype=np.int32)
+    expected  = np.arcsin(test/(2**n_bits))
     predicted = np.array([qasinModuloCORDIC(t, n_bits) for t in test])
 
-    plt.scatter(test, expected, label="Expected", marker='hd')
+    plt.scatter(test, expected,  label="Expected",  marker='hd')
     plt.scatter(test, predicted, label="Predicted", marker="hd")
     plt.title("CORDIC Approx")
     plt.show()
