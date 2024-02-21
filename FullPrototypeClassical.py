@@ -186,8 +186,8 @@ def main():
     expected  = np.arcsin(test/(2**n_bits))
     predicted = np.array([qasinModuloCORDIC(t, n_bits) for t in test])
 
-    plt.scatter(test, expected,  label="Expected",  marker='hd')
-    plt.scatter(test, predicted, label="Predicted", marker="hd")
+    plt.plot(test, expected,  label="Expected")
+    plt.plot(test, predicted, label="Predicted")
     plt.title("CORDIC Approx")
     plt.show()
 
