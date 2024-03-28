@@ -181,7 +181,7 @@ def qasinModuloCORDIC(t: int, n_bits: int) -> float:
 
 
 def main():
-    n_bits    = 10
+    n_bits    = 16
     test      = np.linspace(-(1<<n_bits), (1<<n_bits), num=2048, dtype=np.int32)
     expected  = np.arcsin(test/(2**n_bits))
     predicted = np.array([qasinModuloCORDIC(t, n_bits) for t in test])
