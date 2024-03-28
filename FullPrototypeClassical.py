@@ -93,7 +93,7 @@ def mult(
     '''
 
     aux_2, x = add(aux_2, x, 0, n=n)
-    x += bitshift(aux_2, m, n)
+    x, aux_2 = add(x, aux_2, m, n=n)
     aux_1, x = add(aux_1, x, 0, n=n)
     
     for i in range(int(1+2*np.ceil(np.log(n/m)/np.log((1+5**.5))))):
@@ -181,13 +181,18 @@ def qasinModuloCORDIC(t: int, n_bits: int) -> float:
 
 
 def main():
+<<<<<<< HEAD
     n_bits    = 16
+=======
+    n_bits    = 8
+>>>>>>> origin/main
     test      = np.linspace(-(1<<n_bits), (1<<n_bits), num=2048, dtype=np.int32)
     expected  = np.arcsin(test/(2**n_bits))
     predicted = np.array([qasinModuloCORDIC(t, n_bits) for t in test])
 
     plt.plot(test, expected,  label="Expected")
     plt.plot(test, predicted, label="Predicted")
+    plt.legend()
     plt.title("CORDIC Approx")
     plt.show()
 
